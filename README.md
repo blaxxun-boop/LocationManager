@@ -58,11 +58,11 @@ public class CustomLocation : BaseUnityPlugin
 	{
 		_ = new LocationManager.Location("guildfabs", "GuildAltarSceneFab")
 		{
-			MapIcon = "guildaltar.png", // if you want to set a map icon for your mod, it has to be in the same folder as your asset bundle
+			MapIcon = "portalicon.png",
 			ShowMapIcon = ShowIcon.Explored,
 			Biome = Heightmap.Biome.Meadows,
 			SpawnDistance = new Range(500, 1500),
-      SpawnAltitude = new Range(10, 100),
+			SpawnAltitude = new Range(10, 100),
 			MinimumDistanceFromGroup = 100,
 			Count = 15,
 			Unique = true
