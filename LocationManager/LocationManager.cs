@@ -81,10 +81,26 @@ public class Location
 	/// <para>Use "Explored" to start showing a map icon for the location as soon as a player has explored the area.</para>
 	/// </summary>
 	public ShowIcon ShowMapIcon = ShowIcon.Never;
+
 	/// <summary>
 	/// Sets the map icon for the location.
 	/// </summary>
-	public string? MapIcon = null;
+	public string? MapIcon
+	{
+		get => mapIconName;
+		set
+		{
+			mapIconName = value;
+			MapIconSprite = mapIconName is null ? null : loadSprite(mapIconName);
+		}
+	}
+
+	private string? mapIconName = null;
+
+	/// <summary>
+	/// Sets the map icon for the location.
+	/// </summary>
+	public Sprite? MapIconSprite = null;
 	/// <summary>
 	/// How to rotate the location.
 	/// <para>Use "Fixed" to use the rotation of the prefab.</para>
@@ -117,6 +133,7 @@ public class Location
 
 	private readonly global::Location location;
 	private string folderName = "";
+	private AssetBundle? assetBundle;
 	private static readonly List<Location> registeredLocations = new();
 
 	public Location(string assetBundleFileName, string prefabName, string folderName = "assets") : this(PrefabManager.RegisterAssetBundle(assetBundleFileName, folderName), prefabName)
@@ -126,6 +143,7 @@ public class Location
 
 	public Location(AssetBundle bundle, string prefabName) : this(bundle.LoadAsset<GameObject>(prefabName))
 	{
+		assetBundle = bundle;
 	}
 
 	public Location(GameObject location) : this(location.GetComponent<global::Location>())
@@ -143,21 +161,42 @@ public class Location
 		registeredLocations.Add(this);
 	}
 
-	private byte[] ReadEmbeddedFileBytes(string name)
+	private byte[]? ReadEmbeddedFileBytes(string name)
 	{
 		using MemoryStream stream = new();
-		Assembly.GetExecutingAssembly().GetManifestResourceStream(Assembly.GetExecutingAssembly().GetName().Name + $"{(folderName == "" ? "" : ".") + folderName}." + name)?.CopyTo(stream);
+		if (Assembly.GetExecutingAssembly().GetManifestResourceStream(Assembly.GetExecutingAssembly().GetName().Name + $"{(folderName == "" ? "" : ".") + folderName}." + name) is not {} assemblyStream)
+		{
+			return null;
+		}
+
+		assemblyStream.CopyTo(stream);
 		return stream.ToArray();
 	}
 
-	private Texture2D loadTexture(string name)
+	private Texture2D? loadTexture(string name)
 	{
-		Texture2D texture = new(0, 0);
-		texture.LoadImage(ReadEmbeddedFileBytes(name));
-		return texture;
+		if (ReadEmbeddedFileBytes(name) is { } textureData)
+		{
+			Texture2D texture = new(0, 0);
+			texture.LoadImage(textureData);
+			return texture;
+		}
+		return null;
 	}
 
-	private Sprite loadSprite(string name) => Sprite.Create(loadTexture(name), new Rect(0, 0, 64, 64), Vector2.zero);
+	private Sprite loadSprite(string name)
+	{
+		if (loadTexture(name) is { } texture)
+		{
+			return Sprite.Create(texture, new Rect(0, 0, 64, 64), Vector2.zero);
+		}
+		if (assetBundle?.LoadAsset<Sprite>(name) is { } sprite)
+		{
+			return sprite;
+		}
+
+		throw new FileNotFoundException($"Could not find a file named {name} for the map icon");
+	}
 
 	private static void AddLocationToZoneSystem(ZoneSystem __instance)
 	{
@@ -218,9 +257,9 @@ public class Location
 	{
 		foreach (Location location in registeredLocations)
 		{
-			if (location.MapIcon is { } icon)
+			if (location.MapIconSprite is { } icon)
 			{
-				__instance.m_locationIcons.Add(new Minimap.LocationSpriteData { m_icon = location.loadSprite(icon), m_name = location.location.name });
+				__instance.m_locationIcons.Add(new Minimap.LocationSpriteData { m_icon = icon, m_name = location.location.name });
 			}
 		}
 	}
