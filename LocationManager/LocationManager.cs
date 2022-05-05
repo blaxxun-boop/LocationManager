@@ -164,7 +164,7 @@ public class Location
 	private byte[]? ReadEmbeddedFileBytes(string name)
 	{
 		using MemoryStream stream = new();
-		if (Assembly.GetExecutingAssembly().GetManifestResourceStream(Assembly.GetExecutingAssembly().GetName().Name + $"{(folderName == "" ? "" : ".") + folderName}." + name) is not {} assemblyStream)
+		if (Assembly.GetExecutingAssembly().GetManifestResourceStream(Assembly.GetExecutingAssembly().GetName().Name + $"{(folderName == "" ? "" : ".") + folderName}." + name) is not { } assemblyStream)
 		{
 			return null;
 		}
@@ -247,10 +247,7 @@ public class Location
 			return;
 		}
 
-		foreach (ZNetView netView in registeredLocations.SelectMany(l => l.location.GetComponentsInChildren<ZNetView>()))
-		{
-			__instance.m_prefabs.Add(netView.gameObject);
-		}
+		__instance.m_prefabs.AddRange(registeredLocations.SelectMany(l => l.location.GetComponentsInChildren<ZNetView>(true)).Select(n => n.gameObject));
 	}
 
 	private static void AddMinimapIcons(Minimap __instance)
@@ -267,7 +264,7 @@ public class Location
 	static Location()
 	{
 		Harmony harmony = new("org.bepinex.helpers.LocationManager");
-		harmony.Patch(AccessTools.DeclaredMethod(typeof(ZNetScene), nameof(ZNetScene.Awake)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(Location), nameof(AddLocationZNetViewsToZNetScene)), Priority.VeryHigh));
+		harmony.Patch(AccessTools.DeclaredMethod(typeof(ZNetScene), nameof(ZNetScene.Awake)), new HarmonyMethod(AccessTools.DeclaredMethod(typeof(Location), nameof(AddLocationZNetViewsToZNetScene)), Priority.VeryHigh));
 		harmony.Patch(AccessTools.DeclaredMethod(typeof(ZoneSystem), nameof(ZoneSystem.SetupLocations)), new HarmonyMethod(AccessTools.DeclaredMethod(typeof(Location), nameof(AddLocationToZoneSystem))));
 		harmony.Patch(AccessTools.DeclaredMethod(typeof(Minimap), nameof(Minimap.Awake)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(Location), nameof(AddMinimapIcons))));
 	}
