@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -42,49 +43,23 @@ public class Location
 {
 	public bool CanSpawn = true;
 	public Heightmap.Biome Biome = Heightmap.Biome.Meadows;
-	/// <summary>
-	/// If the location should spawn more towards the edge of the biome or towards the center.
-	/// <para>Use "Edge" to make it spawn towards the edge.</para>
-	/// <para>Use "Median" to make it spawn towards the center.</para>
-	/// <para>Use "Everything" if it doesn't matter.</para>
-	/// </summary>
+	[Description("If the location should spawn more towards the edge of the biome or towards the center.\nUse 'Edge' to make it spawn towards the edge.\nUse 'Median' to make it spawn towards the center.\nUse 'Everything' if it doesn't matter.")]
 	public Heightmap.BiomeArea SpawnArea = Heightmap.BiomeArea.Everything;
-	/// <summary>
-	/// Maximum number of locations to spawn in.
-	/// <para>Does not mean that this many locations will spawn. But Valheim will try its best to spawn this many, if there is space.</para>
-	/// </summary>
+	[Description("Maximum number of locations to spawn in.\nDoes not mean that this many locations will spawn. But Valheim will try its best to spawn this many, if there is space.")]
 	public int Count = 1;
-	/// <summary>
-	/// If set to true, this location will be prioritized over other locations, if they would spawn in the same area.
-	/// </summary>
+	[Description("If set to true, this location will be prioritized over other locations, if they would spawn in the same area.")]
 	public bool Prioritize = false;
-	/// <summary>
-	/// If set to true, Valheim will try to spawn your location as close to the center of the map as possible.
-	/// </summary>
+	[Description("If set to true, Valheim will try to spawn your location as close to the center of the map as possible.")]
 	public bool PreferCenter = false;
-	/// <summary>
-	/// If set to true, all other locations will be deleted, once the first one has been discovered by a player.
-	/// </summary>
+	[Description("If set to true, all other locations will be deleted, once the first one has been discovered by a player.")]
 	public bool Unique = false;
-	/// <summary>
-	/// The name of the group of the location, used by the minimum distance from group setting.
-	/// </summary>
+	[Description("The name of the group of the location, used by the minimum distance from group setting.")]
 	public string GroupName;
-	/// <summary>
-	/// Locations in the same group will keep at least this much distance between each other.
-	/// </summary>
+	[Description("Locations in the same group will keep at least this much distance between each other.")]
 	public float MinimumDistanceFromGroup = 0f;
-	/// <summary>
-	/// When to show the map icon of the location. Requires an icon to be set.
-	/// <para>Use "Never" to not show a map icon for the location.</para>
-	/// <para>Use "Always" to always show a map icon for the location.</para>
-	/// <para>Use "Explored" to start showing a map icon for the location as soon as a player has explored the area.</para>
-	/// </summary>
+	[Description("When to show the map icon of the location. Requires an icon to be set.\nUse 'Never' to not show a map icon for the location.\nUse 'Always' to always show a map icon for the location.\nUse 'Explored' to start showing a map icon for the location as soon as a player has explored the area.")]
 	public ShowIcon ShowMapIcon = ShowIcon.Never;
-
-	/// <summary>
-	/// Sets the map icon for the location.
-	/// </summary>
+	[Description("Sets the map icon for the location.")]
 	public string? MapIcon
 	{
 		get => mapIconName;
@@ -96,39 +71,19 @@ public class Location
 	}
 
 	private string? mapIconName = null;
-
-	/// <summary>
-	/// Sets the map icon for the location.
-	/// </summary>
+	[Description("Sets the map icon for the location.")]
 	public Sprite? MapIconSprite = null;
-	/// <summary>
-	/// How to rotate the location.
-	/// <para>Use "Fixed" to use the rotation of the prefab.</para>
-	/// <para>Use "Random" to randomize the rotation.</para>
-	/// <para>Use "Slope" to rotate the location along a possible slope.</para>
-	/// </summary>
+	[Description("How to rotate the location.\nUse 'Fixed' to use the rotation of the prefab.\nUse 'Random' to randomize the rotation.\nUse 'Slope' to rotate the location along a possible slope.")]
 	public Rotation Rotation = Rotation.Random;
-	/// <summary>
-	/// The minimum and maximum height difference of the terrain below the location.
-	/// </summary>
+	[Description("The minimum and maximum height difference of the terrain below the location.")]
 	public Range HeightDelta = new(0, 2);
-	/// <summary>
-	/// If the location should spawn near water.
-	/// </summary>
+	[Description("If the location should spawn near water.")]
 	public bool SnapToWater = false;
-	/// <summary>
-	/// If the location should spawn in a forest.
-	/// <para>Everything above 1.15 is considered a forest by Valheim.</para>
-	/// <para>2.19 is considered a thick forest by Valheim.</para>
-	/// </summary>
+	[Description("If the location should spawn in a forest.\nEverything above 1.15 is considered a forest by Valheim.\n2.19 is considered a thick forest by Valheim.")]
 	public Range ForestThreshold = new(0, 2.19f);
-	/// <summary>
-	/// Minimum and maximum range from the center of the map for the location.
-	/// </summary>
+	[Description("Minimum and maximum range from the center of the map for the location.")]
 	public Range SpawnDistance = new(0, 10000);
-	/// <summary>
-	/// Minimum and maximum altitude for the location.
-	/// </summary>
+	[Description("Minimum and maximum altitude for the location.")]
 	public Range SpawnAltitude = new(-1000f, 1000f);
 
 	private readonly global::Location location;
@@ -242,12 +197,22 @@ public class Location
 
 	private static void AddLocationZNetViewsToZNetScene(ZNetScene __instance)
 	{
-		if (__instance.m_prefabs.Count <= 0)
+		foreach (ZNetView netView in registeredLocations.SelectMany(l => l.location.GetComponentsInChildren<ZNetView>(true)))
 		{
-			return;
+			if (__instance.m_namedPrefabs.ContainsKey(netView.name.GetStableHashCode()))
+			{
+				string otherName = __instance.m_namedPrefabs[netView.name.GetStableHashCode()].name;
+				if (netView.name != otherName)
+				{
+					Debug.LogError($"Found hash collision for names of prefabs {netView.name} and {otherName} in {Assembly.GetExecutingAssembly()}. Skipping.");
+				}
+			}
+			else
+			{
+				__instance.m_prefabs.Add(netView.gameObject);
+				__instance.m_namedPrefabs[netView.name.GetStableHashCode()] = netView.gameObject;
+			}
 		}
-
-		__instance.m_prefabs.AddRange(registeredLocations.SelectMany(l => l.location.GetComponentsInChildren<ZNetView>(true)).Select(n => n.gameObject));
 	}
 
 	private static void AddMinimapIcons(Minimap __instance)
@@ -264,7 +229,7 @@ public class Location
 	static Location()
 	{
 		Harmony harmony = new("org.bepinex.helpers.LocationManager");
-		harmony.Patch(AccessTools.DeclaredMethod(typeof(ZNetScene), nameof(ZNetScene.Awake)), new HarmonyMethod(AccessTools.DeclaredMethod(typeof(Location), nameof(AddLocationZNetViewsToZNetScene)), Priority.VeryHigh));
+		harmony.Patch(AccessTools.DeclaredMethod(typeof(ZNetScene), nameof(ZNetScene.Awake)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(Location), nameof(AddLocationZNetViewsToZNetScene)), Priority.VeryLow));
 		harmony.Patch(AccessTools.DeclaredMethod(typeof(ZoneSystem), nameof(ZoneSystem.SetupLocations)), new HarmonyMethod(AccessTools.DeclaredMethod(typeof(Location), nameof(AddLocationToZoneSystem))));
 		harmony.Patch(AccessTools.DeclaredMethod(typeof(Minimap), nameof(Minimap.Awake)), postfix: new HarmonyMethod(AccessTools.DeclaredMethod(typeof(Location), nameof(AddMinimapIcons))));
 	}
