@@ -85,6 +85,8 @@ public class Location
 	public Range SpawnDistance = new(0, 10000);
 	[Description("Minimum and maximum altitude for the location.")]
 	public Range SpawnAltitude = new(-1000f, 1000f);
+	[Description("Adds a creature to a spawner that has been added to the location prefab.")]
+	public Dictionary<string, string> CreatureSpawner = new();
 
 	private readonly global::Location location;
 	private string folderName = "";
@@ -211,6 +213,17 @@ public class Location
 			{
 				__instance.m_prefabs.Add(netView.gameObject);
 				__instance.m_namedPrefabs[netView.name.GetStableHashCode()] = netView.gameObject;
+			}
+		}
+
+		foreach (Location location in registeredLocations)
+		{
+			foreach (CreatureSpawner spawner in location.location.transform.GetComponentsInChildren<CreatureSpawner>())
+			{
+				if (location.CreatureSpawner.TryGetValue(spawner.name, out string creature))
+				{
+					spawner.m_creaturePrefab = __instance.GetPrefab(creature);
+				}
 			}
 		}
 	}
