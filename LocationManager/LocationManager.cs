@@ -63,8 +63,6 @@ public class Location
 	[Description("When to show the map icon of the location. Requires an icon to be set.\nUse 'Never' to not show a map icon for the location.\nUse 'Always' to always show a map icon for the location.\nUse 'Explored' to start showing a map icon for the location as soon as a player has explored the area.")]
 	public ShowIcon ShowMapIcon = ShowIcon.Never;
 	
-	public readonly GameObject Prefab;
-
 	[Description("Sets the map icon for the location.")]
 	public string? MapIcon
 	{
@@ -110,24 +108,19 @@ public class Location
 	public Location(AssetBundle bundle, string prefabName) : this(bundle.LoadAsset<GameObject>(prefabName))
 	{
 		assetBundle = bundle;
-		Prefab = bundle.LoadAsset<GameObject>(prefabName);
-		location = Prefab.GetComponent<global::Location>();
-		if (location == null)
+	}
+
+	public Location(GameObject location) : this(location.GetComponent<global::Location>())
+	{
+		if (this.location == null)
 		{
 			throw new ArgumentNullException(nameof(location), "The GameObject does not have a location component.");
 		}
-		GroupName = location.name;
-		registeredLocations.Add(this);
 	}
 
-	public Location(GameObject locationPrefab)
+	public Location(global::Location location)
 	{
-		Prefab = locationPrefab;
-		location = Prefab.GetComponent<global::Location>();
-		if (location == null)
-		{
-			throw new ArgumentNullException(nameof(location), $"The GameObject {Prefab.name} does not have a location component.");
-		}
+		this.location = location;
 		GroupName = location.name;
 		registeredLocations.Add(this);
 	}
