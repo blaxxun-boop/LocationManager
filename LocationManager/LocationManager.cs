@@ -89,6 +89,8 @@ public class Location
 	public Range SpawnDistance = new(0, 10000);
 	[Description("Minimum and maximum altitude for the location.")]
 	public Range SpawnAltitude = new(-1000f, 1000f);
+	[Description("If set to true, vegetation is removed inside the location exterior radius.")]
+	public bool ClearArea = false;
 	[Description("Adds a creature to a spawner that has been added to the location prefab.")]
 	public Dictionary<string, string> CreatureSpawner = new();
 
@@ -195,6 +197,9 @@ public class Location
 				m_maxDistance = location.SpawnDistance.max,
 				m_minAltitude = location.SpawnAltitude.min,
 				m_maxAltitude = location.SpawnAltitude.max,
+				m_clearArea = location.ClearArea,
+				m_exteriorRadius = location.location.m_exteriorRadius,
+				m_interiorRadius = location.location.m_interiorRadius,
 			});
 		}
 
