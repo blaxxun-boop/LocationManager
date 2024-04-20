@@ -203,7 +203,9 @@ public class Location
 			});
 		}
 
-		Object.Destroy(__instance.m_locationProxyPrefab.GetComponent<LocationProxy>());
+		// LocationProxy has OnDestroy which delays the component removal.
+		// This temporarily duplicates the component so the right one must be searched.
+		Object.Destroy(__instance.m_locationProxyPrefab.GetComponents<LocationProxy>().FirstOrDefault(proxy => proxy.enabled));
 		__instance.m_locationProxyPrefab.AddComponent<LocationProxy>();
 	}
 
