@@ -203,7 +203,7 @@ public class Location
 			});
 		}
 
-		Object.Destroy(__instance.m_locationProxyPrefab.GetComponent<LocationProxy>());
+		Object.DestroyImmediate(__instance.m_locationProxyPrefab.GetComponent<LocationProxy>());
 		__instance.m_locationProxyPrefab.AddComponent<LocationProxy>();
 	}
 
