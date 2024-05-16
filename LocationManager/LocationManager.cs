@@ -371,7 +371,17 @@ public static class PrefabManager
 			bundleLoader.m_bundleNameToLoaderIndex[""] = 0; // So that AssetLoader ctor doesn't crash
 			
 			AssetID id = AssetIDFromObject(obj);
-			AssetLoader loader = new(id, new AssetLocation("", ""))
+
+			// Ensure the path is unique by appending a unique identifier if necessary
+			string uniquePath = obj.name;
+			int counter = 1;
+			while (bundleLoader.m_assetIDToLoaderIndex.ContainsKey(id))
+			{
+				uniquePath = obj.name + "_" + counter;
+				counter++;
+			}
+
+			AssetLoader loader = new(id, new AssetLocation("", uniquePath))
 			{
 				m_asset = obj,
 				m_referenceCounter = new ReferenceCounter(2),
